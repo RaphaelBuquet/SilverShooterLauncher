@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SilverShooterLauncher.App"
+             xmlns:local="using:SilverShooterLauncher"
+             RequestedThemeVariant="Default">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Palladium.Controls/Resources/Styles.axaml" />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+    </Application.Styles>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Palladium.Controls/Resources/Icons.axaml" />
+                <ResourceInclude Source="avares://Palladium.Controls/Resources/Colours.axaml" />
+                <ResourceInclude Source="avares://Palladium.Controls/Resources/Fonts.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

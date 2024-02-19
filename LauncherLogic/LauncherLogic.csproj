@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PalladiumUpdater\PalladiumUpdater.Protocol\PalladiumUpdater.Protocol.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Reactive" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\PalladiumUpdater.exe" />
+    <EmbeddedResource Include="Resources\PalladiumUpdater.exe" />
+  </ItemGroup>
+
+</Project>

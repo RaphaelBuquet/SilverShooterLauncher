@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SilverShooterLauncher.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Palladium.Controls;assembly=Palladium.Controls"
+        mc:Ignorable="d"
+        Width="800"
+        MinWidth="800"
+        MaxWidth="800"
+        Height="450"
+        MaxHeight="450"
+        MinHeight="450"
+        CanResize="False"
+        x:Class="SilverShooterLauncher.Views.MainWindow"
+        x:DataType="vm:IMainWindowViewModel"
+        Icon="/Assets/Icon v1.png"
+        Title="Silver Shooter Launcher">
+
+    <Design.DataContext>
+        <vm:DesignMainWindowViewModel />
+    </Design.DataContext>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Vertical" Margin="24">
+            <TextBlock Foreground="{StaticResource Tone1}" Text="{CompiledBinding InstalledVersion}" />
+            <TextBlock Foreground="{StaticResource Tone1}" Text="{CompiledBinding LatestVersion}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Vertical"
+                    VerticalAlignment="Center"
+                    Margin="24 0 24 72"
+                    Spacing="8">
+            <Border>
+                <Image Height="176" Width="176" Source="/Assets/Icon v1-shadow.png" />
+            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                <Button Classes="GhostButton" Command="{CompiledBinding DownloadCommand}"
+                        IsVisible="{CompiledBinding IsDownloadVisible}">
+                    Download
+                </Button>
+                <Button Classes="GhostButton" Command="{CompiledBinding PlayCommand}"
+                        IsVisible="{CompiledBinding IsPlayVisible}">
+                    Play Game
+                </Button>
+                <Button Classes="GhostButton" Command="{CompiledBinding UpdateCommand}"
+                        IsVisible="{CompiledBinding IsUpdateVisible}">
+                    Update
+                </Button>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" Margin="12" Spacing="6">
+                <controls:ActivityIndicator IsVisible="{CompiledBinding IsLoading}" />
+                <TextBlock Foreground="{StaticResource Tone1}" Text="{CompiledBinding StatusText}" />
+            </StackPanel>
+            <Panel Background="{StaticResource Tone2}">
+                <TextBlock Foreground="{StaticResource Tone1-75}" Margin="12" FontSize="12">©️ Raphaël Buquet</TextBlock>
+                <TextBlock TextAlignment="Right" Foreground="{StaticResource Tone1-75}" Margin="12" FontSize="12"
+                           Text="{CompiledBinding LauncherVersion}" />
+            </Panel>
+        </StackPanel>
+    </Grid>
+
+
+</Window>
