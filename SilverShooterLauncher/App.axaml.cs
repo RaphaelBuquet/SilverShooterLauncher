@@ -32,6 +32,11 @@ public partial class App : Application
 			if (!File.Exists(appExe))
 			{
 				appExe = null;
+				Console.Error.WriteLine("Could not determine the path to the .exe file. Self-update will be unavailable.");
+			}
+			else
+			{
+				Console.WriteLine($"Running from \"{appExe}\". Self-update is available.");
 			}
 			desktop.MainWindow = new MainWindow
 			{

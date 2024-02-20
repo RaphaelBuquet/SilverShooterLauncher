@@ -1,7 +1,10 @@
+using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reactive.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using PalladiumUpdater.Protocol;
 
 namespace LauncherLogic;
@@ -10,33 +13,9 @@ public class LauncherState : IDisposable
 {
 	private readonly string? appExe;
 
-	/// <summary>
-	///     Emits null when it isn't installed, emits a value when it is installed or found.
-	/// </summary>
-	public IObservable<string?> InstalledGameVersion => installedGameVersion;
-
-	/// <summary>
-	///     Emits null when it isn't found, or the value when it is fetched.
-	/// </summary>
-	public IObservable<string?> AvailableGameVersion => availableGameVersion;
-
 	public readonly IObservable<bool> GameUpdateAvailable;
 
-	/// <summary>
-	///     Emits null when it isn't found, or the value when it is fetched.
-	/// </summary>
-	public IObservable<string?> AvailableLauncherVersion => availableLauncherVersion;
-
 	public readonly IObservable<bool> LauncherUpdateAvailable;
-
-	public IObservable<bool> IsGameInstalled => isGameInstalled;
-
-	public IObservable<bool> IsLoading => isLoading;
-
-	/// <summary>
-	///     Emits user facing message updates.
-	/// </summary>
-	public IObservable<string> UserMessage => userMessage;
 
 	private readonly LoadingStack loadingStack;
 	private readonly ReplaySubject<bool> isLoading;
@@ -85,6 +64,7 @@ public class LauncherState : IDisposable
 			});
 			LauncherUpdateAvailable = availableLauncherVersion.Select(x =>
 			{
+				// consider no update is available if the system failed to get the latest version.
 				if (x == null)
 				{
 					return false;
@@ -120,6 +100,30 @@ public class LauncherState : IDisposable
 		}
 	}
 
+	/// <summary>
+	///     Emits null when it isn't installed, emits a value when it is installed or found.
+	/// </summary>
+	public IObservable<string?> InstalledGameVersion => installedGameVersion;
+
+	/// <summary>
+	///     Emits null when it isn't found, or the value when it is fetched.
+	/// </summary>
+	public IObservable<string?> AvailableGameVersion => availableGameVersion;
+
+	/// <summary>
+	///     Emits null when it isn't found, or the value when it is fetched.
+	/// </summary>
+	public IObservable<string?> AvailableLauncherVersion => availableLauncherVersion;
+
+	public IObservable<bool> IsGameInstalled => isGameInstalled;
+
+	public IObservable<bool> IsLoading => isLoading;
+
+	/// <summary>
+	///     Emits user facing message updates.
+	/// </summary>
+	public IObservable<string> UserMessage => userMessage;
+
 	private void RefreshGameInstallState()
 	{
 		installedGameVersion.OnNext(DateTime.Now.ToString());
@@ -132,6 +136,7 @@ public class LauncherState : IDisposable
 
 	private void HandleException(Exception e)
 	{
+		Console.Error.WriteLine($"An error was propagated: {e}");
 		userMessage.OnNext("An internal error occured.");
 	}
 
@@ -163,20 +168,36 @@ public class LauncherState : IDisposable
 		}
 	}
 
-	public Task StartGame()
+	public async Task StartGame()
 	{
 		using LoadingStack.Handle handle = loadingStack.Acquire();
 		try
 		{
-			GameInstall.StartGame();
+			Process? process = GameInstall.StartGame();
 			userMessage.OnNext("");
-			return Task.CompletedTask;
+
+			// check for success
+			if (process != null)
+			{
+				await Task.Delay(TimeSpan.FromSeconds(2));
+				if (!process.HasExited)
+				{
+					if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp)
+					{
+						desktopApp.Shutdown();
+					}
+				}
+			}
+			else
+			{
+				_ = Console.Error.WriteLineAsync($"Failed to start the game: no process was started.");
+				userMessage.OnNext("Failed to start the game.");
+			}
 		}
 		catch (Exception e)
 		{
 			_ = Console.Error.WriteLineAsync($"Failed to start the game: {e}");
 			userMessage.OnNext("Failed to start the game due to an internal error.");
-			return Task.CompletedTask;
 		}
 	}
 
@@ -184,82 +205,81 @@ public class LauncherState : IDisposable
 	{
 		if (await LauncherUpdateAvailable.FirstAsync())
 		{
-			using LoadingStack.Handle handle = loadingStack.Acquire();
-			try
-			{
-				await UpdateLauncher();
-			}
-			catch (Exception e)
-			{
-				_ = Console.Error.WriteLineAsync($"Failed to update the launcher: {e}");
-				userMessage.OnNext("Failed to update the launcher due to an internal error.");
-			}
+			await UpdateLauncher();
 		}
 		else if (await GameUpdateAvailable.FirstAsync())
 		{
-			using LoadingStack.Handle handle = loadingStack.Acquire();
-			try
-			{
-				UpdateGame();
-			}
-			catch (Exception e)
-			{
-				_ = Console.Error.WriteLineAsync($"Failed to update the game: {e}");
-				userMessage.OnNext("Failed to update the game due to an internal error.");
-			}
+			await GetGame(true);
 		}
-	}
-
-	private void UpdateGame()
-	{
-		isGameInstalled.OnNext(false);
-		installedGameVersion.OnNext(null);
-
-		// TODO download
-		// TODO update
-		// TODO emit update
 	}
 
 	private async Task UpdateLauncher()
 	{
-		string? version = await AvailableLauncherVersion.FirstAsync();
-		if (version == null)
-		{
-			throw new InvalidOperationException();
-		}
-
-		userMessage.OnNext($"Getting launcher update details...");
-		UpdateSourceConfig config = await LauncherInstall.GetLauncherUpdateSourceConfig();
-
-		string downloadedArchive;
+		using LoadingStack.Handle handle = loadingStack.Acquire();
 		try
 		{
-			downloadedArchive = await HttpDownloader.GetArchive(client, config.ArchiveUrl, version, LauncherInstall.AppName, Observer.Create<float>(progress => { userMessage.OnNext($"Downloading launcher update: {Math.Round(progress * 100.0)}%"); }));
+			string? version = await AvailableLauncherVersion.FirstAsync();
+			if (version == null)
+			{
+				throw new InvalidOperationException();
+			}
+
+			userMessage.OnNext($"Getting launcher update details...");
+			UpdateSourceConfig config = await LauncherInstall.GetLauncherUpdateSourceConfig();
+
+			string downloadedArchive;
+			try
+			{
+				downloadedArchive = await HttpDownloader.GetArchive(client, config.ArchiveUrl, version, LauncherInstall.AppName, Observer.Create<float>(progress => { userMessage.OnNext($"Downloading launcher update: {Math.Round(progress * 100.0)}%"); }));
+			}
+			catch (Exception e)
+			{
+				_ = Console.Error.WriteLineAsync($"Failed to download the launcher update archive: {e}");
+				userMessage.OnNext("Failed to download the launcher update.");
+				return;
+			}
+
+			userMessage.OnNext($"Decompressing...");
+			string downloadedUpdate = await ArchiveHandler.Decompress(downloadedArchive, LauncherInstall.AppName, version);
+
+			if (appExe == null)
+			{
+				userMessage.OnNext("Failed to determine the location of the file to update.");
+				return;
+			}
+
+			string? downloadedExe = SelfUpdate.FindExeInDownloadedUpdate(downloadedUpdate);
+			if (downloadedExe == null)
+			{
+				userMessage.OnNext("The downloaded launcher update is invalid.");
+				return;
+			}
+
+			try
+			{
+				userMessage.OnNext($"Copying files...");
+				await Task.Run(async () => await SelfUpdate.InstallUpdateSingleFile(downloadedExe, appExe, typeof(LauncherState).Assembly));
+			}
+			catch (Exception e)
+			{
+				_ = Console.Error.WriteLineAsync($"Failed to perform auto-update of launcher: {e}");
+				userMessage.OnNext("Failed to perform auto-update of launcher.");
+				return;
+			}
 		}
 		catch (Exception e)
 		{
-			_ = Console.Error.WriteLineAsync($"Failed to download the launcher update archive: {e}");
-			userMessage.OnNext("Failed to download the launcher update.");
-			return;
-		}
-
-		userMessage.OnNext($"Decompressing...");
-		string downloadedUpdate = await ArchiveHandler.Decompress(downloadedArchive, LauncherInstall.AppName, version);
-
-		userMessage.OnNext($"Copying files...");
-		try
-		{
-			await Task.Run(async () => await SelfUpdate.InstallUpdateFromDirectory(downloadedUpdate, appExe, typeof(LauncherState).Assembly));
-		}
-		catch (Exception e)
-		{
-			_ = Console.Error.WriteLineAsync($"Failed to perform auto-update of launcher: {e}");
-			userMessage.OnNext("Failed to perform auto-update of launcher.");
-			return;
+			_ = Console.Error.WriteLineAsync($"Failed to update the launcher: {e}");
+			userMessage.OnNext("Failed to update the launcher due to an internal error.");
 		}
 	}
 
-	public async Task StartDownload()
+	public Task StartGameDownload()
+	{
+		return GetGame(false);
+	}
+
+	private async Task GetGame(bool isUpdate)
 	{
 		using LoadingStack.Handle handle = loadingStack.Acquire();
 		try
@@ -270,16 +290,13 @@ public class LauncherState : IDisposable
 				throw new InvalidOperationException();
 			}
 
-			userMessage.OnNext($"Getting game details...");
-			UpdateSourceConfig config = await GameInstall.GetGameUpdateSourceConfig(); 
+			userMessage.OnNext(isUpdate ? "Getting game update details..." : "Getting game details...");
+			UpdateSourceConfig config = await GameInstall.GetGameUpdateSourceConfig();
 
 			string downloadedArchive;
 			try
 			{
-				downloadedArchive = await HttpDownloader.GetArchive(client, config.ArchiveUrl, version, GameInstall.GameName, Observer.Create<float>(progress =>
-				{
-					userMessage.OnNext($"Downloading game: {Math.Round(progress * 100.0)}%");
-				}));
+				downloadedArchive = await HttpDownloader.GetArchive(client, config.ArchiveUrl, version, GameInstall.GameName, Observer.Create<float>(progress => { userMessage.OnNext($"Downloading game: {Math.Round(progress * 100.0)}%"); }));
 			}
 			catch (Exception e)
 			{
@@ -302,13 +319,21 @@ public class LauncherState : IDisposable
 				userMessage.OnNext("Failed to install game files.");
 				return;
 			}
-			userMessage.OnNext($"Game installed!");
+			userMessage.OnNext(isUpdate ? "Game updated!" : "Game installed!");
 			RefreshGameInstallState();
 		}
 		catch (Exception e)
 		{
-			_ = Console.Error.WriteLineAsync($"Failed to download the game: {e}");
-			userMessage.OnNext("Failed to download the game due to an internal error.");
+			if (isUpdate)
+			{
+				_ = Console.Error.WriteLineAsync($"Failed to update the game: {e}");
+				userMessage.OnNext("Failed to update the game due to an internal error.");
+			}
+			else
+			{
+				_ = Console.Error.WriteLineAsync($"Failed to download the game: {e}");
+				userMessage.OnNext("Failed to download the game due to an internal error.");
+			}
 		}
 	}
 

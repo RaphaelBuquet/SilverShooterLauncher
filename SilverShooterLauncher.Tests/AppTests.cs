@@ -60,6 +60,94 @@ public class AppTests
 		});
 	}
 
+	[Test]
+	[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
+	public async Task UpdateGame()
+	{
+		GameInstall.MockGameInstall("v0.1");
+
+		int port = ArrangeConfig(out UpdateSourceConfig launcherConfig, out UpdateSourceConfig gameConfig);
+		await InstallConfig(launcherConfig, gameConfig);
+
+		using var stopHandle = new MockServer.StopHandle();
+		await StartServer(port, stopHandle, launcherConfig, gameConfig, LauncherInstall.Version, "v1");
+
+		await new TestScheduler().With(async scheduler =>
+		{
+			using var vm = new MainWindowViewModel(null);
+
+			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
+			scheduler.Start();
+
+			Assert.IsFalse(vm.IsDownloadVisible);
+			Assert.IsTrue(vm.IsPlayVisible);
+			Assert.IsTrue(vm.IsUpdateVisible);
+			Assert.AreEqual("Installed version: v0.1", vm.InstalledVersion);
+			Assert.AreEqual("Latest version: v1", vm.LatestVersion);
+			Assert.AreEqual("A game update is available!", vm.StatusText);
+			Assert.IsFalse(vm.IsLoading);
+
+			var isLoadingWasTrue = vm.WhenAnyValue(x => x.IsLoading)
+				.Any(isLoading => isLoading)
+				.Timeout(TimeSpan.FromSeconds(1))
+				.ToTask();
+			await vm.UpdateCommand.Execute();
+			scheduler.Start();
+
+			Assert.IsTrue(await isLoadingWasTrue);
+			Assert.IsFalse(vm.IsLoading);
+			Assert.IsFalse(vm.IsDownloadVisible);
+			Assert.IsTrue(vm.IsPlayVisible);
+			Assert.IsFalse(vm.IsUpdateVisible);
+			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
+			Assert.AreEqual("Game updated!", vm.StatusText);
+		});
+	}
+
+	[Test]
+	[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
+	public async Task LauncherUpdate()
+	{
+		GameInstall.MockGameInstall("v1");
+
+		int port = ArrangeConfig(out UpdateSourceConfig launcherConfig, out UpdateSourceConfig gameConfig);
+		await InstallConfig(launcherConfig, gameConfig);
+
+		using var stopHandle = new MockServer.StopHandle();
+		await StartServer(port, stopHandle, launcherConfig, gameConfig, "v1111111111", "v1");
+
+		await new TestScheduler().With(async scheduler =>
+		{
+			using var vm = new MainWindowViewModel(null);
+
+			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
+			scheduler.Start();
+
+			Assert.IsFalse(vm.IsDownloadVisible);
+			Assert.IsTrue(vm.IsPlayVisible);
+			Assert.IsTrue(vm.IsUpdateVisible);
+			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
+			Assert.AreEqual("Latest version: v1", vm.LatestVersion);
+			Assert.AreEqual("A launcher update is available.", vm.StatusText);
+			Assert.IsFalse(vm.IsLoading);
+
+			var isLoadingWasTrue = vm.WhenAnyValue(x => x.IsLoading)
+				.Any(isLoading => isLoading)
+				.Timeout(TimeSpan.FromSeconds(1))
+				.ToTask();
+			await vm.UpdateCommand.Execute();
+			scheduler.Start();
+
+			Assert.IsTrue(await isLoadingWasTrue);
+			Assert.IsFalse(vm.IsLoading);
+			Assert.IsFalse(vm.IsDownloadVisible);
+			Assert.IsTrue(vm.IsPlayVisible);
+			Assert.IsTrue(vm.IsUpdateVisible);
+			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
+			Assert.AreEqual("Failed to determine the location of the file to update.", vm.StatusText);
+		});
+	}
+
 	private static async Task InstallConfig(UpdateSourceConfig launcherConfig, UpdateSourceConfig gameConfig)
 	{
 		await File.WriteAllTextAsync(LauncherInstall.ConfigFile, ConfigParser.MakeString(launcherConfig));
@@ -110,14 +198,14 @@ public class AppTests
 			Assert.IsFalse(vm.IsLoading);
 		});
 	}
-	
+
 	[Test]
 	[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 	public async Task ServerUnavailable_WithInstalled()
 	{
 		int port = ArrangeConfig(out UpdateSourceConfig launcherConfig, out UpdateSourceConfig gameConfig);
 		await InstallConfig(launcherConfig, gameConfig);
-		
+
 		GameInstall.MockGameInstall("v1");
 
 		using var stopHandle = new MockServer.StopHandle();

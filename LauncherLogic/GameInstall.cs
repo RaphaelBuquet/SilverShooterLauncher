@@ -15,7 +15,7 @@ public class GameInstall
 		return File.Exists(exe);
 	}
 
-	public static void MockGameInstall(string expectedVersion)
+	public static void MockGameInstall(string mockVersion)
 	{
 		var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GameName);
 		var exe = Path.Combine(dir, GameExe);
@@ -23,12 +23,12 @@ public class GameInstall
 		{
 			Directory.CreateDirectory(dir);
 		}
-		
+
 		// always overwrite.
 		File.WriteAllBytes(exe, Array.Empty<byte>());
-		HttpDownloader.MockLocalVersion(GameName, expectedVersion);
+		HttpDownloader.MockLocalVersion(GameName, mockVersion);
 	}
-	
+
 	public static void DeleteGameInstall()
 	{
 		var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GameName);
@@ -37,8 +37,8 @@ public class GameInstall
 			Directory.Delete(dir, true);
 		}
 	}
-	
-	public static void StartGame()
+
+	public static Process? StartGame()
 	{
 		var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), GameName, GameExe);
 		var psi = new ProcessStartInfo()
@@ -46,14 +46,14 @@ public class GameInstall
 			FileName = exe,
 			UseShellExecute = true
 		};
-		Process.Start(psi);
+		return Process.Start(psi);
 	}
 
 	public static Task<string?> GetGameVersion()
 	{
 		return HttpDownloader.GetLocalVersion(GameName);
 	}
-	
+
 	public static async Task<UpdateSourceConfig> GetGameUpdateSourceConfig()
 	{
 		var config = await Utils.TryGetGameInstallSourceConfig(ConfigFile);
