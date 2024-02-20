@@ -12,7 +12,6 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Palladium.Controls/Resources/Styles.axaml" />
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     </Application.Styles>
 
     <Application.Resources>

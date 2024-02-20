@@ -1,14 +1,17 @@
 using System;
+using System.IO;
 using System.Reactive;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using LauncherLogic;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using SilverShooterLauncher.ViewModels;
 using SilverShooterLauncher.Views;
+using Path = System.IO.Path;
 
 namespace SilverShooterLauncher;
 
@@ -24,8 +27,12 @@ public partial class App : Application
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
 			InstallLogging();
-			
-			string appExe = typeof(MainWindowViewModel).Assembly.Location;
+
+			string? appExe = Path.Combine(AppContext.BaseDirectory, $"{LauncherInstall.AppName}.exe");
+			if (!File.Exists(appExe))
+			{
+				appExe = null;
+			}
 			desktop.MainWindow = new MainWindow
 			{
 				DataContext = new MainWindowViewModel(appExe)
