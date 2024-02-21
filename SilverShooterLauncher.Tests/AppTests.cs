@@ -5,7 +5,9 @@ using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Text;
 using LauncherLogic;
+using Microsoft.Extensions.Logging;
 using Microsoft.Reactive.Testing;
+using Palladium.Logging;
 using PalladiumUpdater.Protocol;
 using ReactiveUI;
 using ReactiveUI.Testing;
@@ -30,7 +32,9 @@ public class AppTests
 
 		await new TestScheduler().With(async scheduler =>
 		{
-			using var vm = new MainWindowViewModel(null);
+			var log = new Log();
+			_ = new LogToConsole(log);
+			using var vm = new MainWindowViewModel(log, null);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
 			scheduler.Start();
@@ -57,6 +61,8 @@ public class AppTests
 			Assert.IsFalse(vm.IsUpdateVisible);
 			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
 			Assert.AreEqual("Game installed!", vm.StatusText);
+
+			Assert.AreEqual(0, log.DataStore.Entries.Count(x => x.LogLevel == LogLevel.Error));
 		});
 	}
 
@@ -74,7 +80,9 @@ public class AppTests
 
 		await new TestScheduler().With(async scheduler =>
 		{
-			using var vm = new MainWindowViewModel(null);
+			var log = new Log();
+			_ = new LogToConsole(log);
+			using var vm = new MainWindowViewModel(log, null);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
 			scheduler.Start();
@@ -101,6 +109,8 @@ public class AppTests
 			Assert.IsFalse(vm.IsUpdateVisible);
 			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
 			Assert.AreEqual("Game updated!", vm.StatusText);
+
+			Assert.AreEqual(0, log.DataStore.Entries.Count(x => x.LogLevel == LogLevel.Error));
 		});
 	}
 
@@ -118,7 +128,9 @@ public class AppTests
 
 		await new TestScheduler().With(async scheduler =>
 		{
-			using var vm = new MainWindowViewModel(null);
+			var log = new Log();
+			_ = new LogToConsole(log);
+			using var vm = new MainWindowViewModel(log, null);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
 			scheduler.Start();
@@ -145,6 +157,8 @@ public class AppTests
 			Assert.IsTrue(vm.IsUpdateVisible);
 			Assert.AreEqual("Installed version: v1", vm.InstalledVersion);
 			Assert.AreEqual("Failed to determine the location of the file to update.", vm.StatusText);
+
+			Assert.AreEqual(0, log.DataStore.Entries.Count(x => x.LogLevel == LogLevel.Error));
 		});
 	}
 
@@ -184,7 +198,9 @@ public class AppTests
 
 		await new TestScheduler().With(async scheduler =>
 		{
-			using var vm = new MainWindowViewModel(null);
+			var log = new Log();
+			_ = new LogToConsole(log);
+			using var vm = new MainWindowViewModel(log, null);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
 			scheduler.Start();
@@ -196,6 +212,8 @@ public class AppTests
 			Assert.AreEqual("", vm.LatestVersion);
 			Assert.AreEqual("The server is unavailable.", vm.StatusText);
 			Assert.IsFalse(vm.IsLoading);
+
+			Assert.AreEqual(2, log.DataStore.Entries.Count(x => x.LogLevel == LogLevel.Error));
 		});
 	}
 
@@ -213,7 +231,9 @@ public class AppTests
 
 		await new TestScheduler().With(async scheduler =>
 		{
-			using var vm = new MainWindowViewModel(null);
+			var log = new Log();
+			_ = new LogToConsole(log);
+			using var vm = new MainWindowViewModel(log, null);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(500)); // seems to be needed when the debugger is attached
 			scheduler.Start();
@@ -225,6 +245,8 @@ public class AppTests
 			Assert.AreEqual("", vm.LatestVersion);
 			Assert.AreEqual("The server is unavailable.", vm.StatusText);
 			Assert.IsFalse(vm.IsLoading);
+
+			Assert.AreEqual(2, log.DataStore.Entries.Count(x => x.LogLevel == LogLevel.Error));
 		});
 	}
 

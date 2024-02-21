@@ -1,10 +1,11 @@
+using Palladium.Logging;
 using PalladiumUpdater.Protocol;
 
 namespace LauncherLogic;
 
 public static class Utils
 {
-	public static async Task<UpdateSourceConfig?> TryGetGameInstallSourceConfig(string configFile)
+	public static async Task<UpdateSourceConfig?> TryGetGameInstallSourceConfig(Log log, string configFile)
 	{
 		UpdateSourceConfig? config = null;
 		if (File.Exists(configFile))
@@ -16,7 +17,7 @@ public static class Utils
 			catch (Exception e)
 			{
 				// if the config is wrong that's fine
-				_ = Console.Error.WriteLineAsync($"Failed to parse config file \"{configFile}\": {e}");
+				log.Error($"Failed to parse config file \"{configFile}\": {e}");
 			}
 		}
 		return config;

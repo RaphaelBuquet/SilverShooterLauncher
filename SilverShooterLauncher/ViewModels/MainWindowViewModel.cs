@@ -4,6 +4,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using LauncherLogic;
+using Palladium.Logging;
 using ReactiveUI;
 
 namespace SilverShooterLauncher.ViewModels;
@@ -25,11 +26,12 @@ public class MainWindowViewModel : ViewModelBase, IMainWindowViewModel, IDisposa
 
 	private readonly ObservableAsPropertyHelper<bool> isLoading;
 
+	/// <param name="log"></param>
 	/// <param name="appExe"></param>
 	/// <inheritdoc />
-	public MainWindowViewModel(string? appExe)
+	public MainWindowViewModel(Log log, string? appExe)
 	{
-		state = new LauncherState(appExe);
+		state = new LauncherState(log, appExe);
 		installedVersion = state.InstalledGameVersion
 			.Select(x =>
 			{

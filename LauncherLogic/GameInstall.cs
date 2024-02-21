@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Palladium.Logging;
 using PalladiumUpdater.Protocol;
 
 namespace LauncherLogic;
@@ -54,9 +55,9 @@ public class GameInstall
 		return HttpDownloader.GetLocalVersion(GameName);
 	}
 
-	public static async Task<UpdateSourceConfig> GetGameUpdateSourceConfig()
+	public static async Task<UpdateSourceConfig> GetGameUpdateSourceConfig(Log log)
 	{
-		var config = await Utils.TryGetGameInstallSourceConfig(ConfigFile);
+		var config = await Utils.TryGetGameInstallSourceConfig(log, ConfigFile);
 		if (config == null)
 		{
 			config = DefaultUpdateSourceConfig();

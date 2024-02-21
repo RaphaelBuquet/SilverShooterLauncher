@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Palladium.ExtensionFunction
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SilverShooterLauncher.Tests", "SilverShooterLauncher.Tests\SilverShooterLauncher.Tests.csproj", "{82DA43F0-8534-42A8-BBC7-21705113CE1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Palladium.Logging", "..\Palladium\AppSource\Palladium.Logging\Palladium.Logging.csproj", "{52D22BDD-4032-401D-A55A-D80C30880D81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,5 +55,9 @@ Global
 		{82DA43F0-8534-42A8-BBC7-21705113CE1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82DA43F0-8534-42A8-BBC7-21705113CE1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82DA43F0-8534-42A8-BBC7-21705113CE1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52D22BDD-4032-401D-A55A-D80C30880D81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52D22BDD-4032-401D-A55A-D80C30880D81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52D22BDD-4032-401D-A55A-D80C30880D81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52D22BDD-4032-401D-A55A-D80C30880D81}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

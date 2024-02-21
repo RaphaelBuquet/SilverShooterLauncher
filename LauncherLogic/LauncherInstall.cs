@@ -1,3 +1,4 @@
+using Palladium.Logging;
 using PalladiumUpdater.Protocol;
 
 namespace LauncherLogic;
@@ -7,17 +8,17 @@ public class LauncherInstall
 	public const string ConfigFile =  "SilverShooterLauncherConfig.txt";
 	public const string AppName = "SilverShooterLauncher";
 	public const string Version = "v0.1";
-	
-	public static async Task<UpdateSourceConfig> GetLauncherUpdateSourceConfig()
+
+	public static async Task<UpdateSourceConfig> GetLauncherUpdateSourceConfig(Log log)
 	{
-		var config = await Utils.TryGetGameInstallSourceConfig(ConfigFile);
+		var config = await Utils.TryGetGameInstallSourceConfig(log, ConfigFile);
 		if (config == null)
 		{
 			config = DefaultUpdateSourceConfig();
 		}
 		return config.Value;
 	}
-	
+
 	private static UpdateSourceConfig DefaultUpdateSourceConfig()
 	{
 		return new UpdateSourceConfig()

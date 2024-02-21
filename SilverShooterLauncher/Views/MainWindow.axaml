@@ -14,7 +14,7 @@
         CanResize="False"
         x:Class="SilverShooterLauncher.Views.MainWindow"
         x:DataType="vm:IMainWindowViewModel"
-        Icon="/Assets/Icon v1.png"
+        Icon="/Assets/Icon v1.ico"
         Title="Silver Shooter Launcher">
 
     <Design.DataContext>

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\PalladiumUpdater\PalladiumUpdater.Protocol\PalladiumUpdater.Protocol.csproj" />
+    <ProjectReference Include="..\..\Palladium\AppSource\Palladium.Logging\Palladium.Logging.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
